@@ -1,0 +1,47 @@
+{
+  "name": "thelounge-plugin-yomama",
+  "version": "1.0.1",
+  "description": "A TheLounge plugin that sends random Yo Mama jokes.",
+  "main": "index.js",
+  "license": "MIT",
+  "author": "azstrait",
+  "thelounge": {
+    "name": "yomama",
+    "type": "plugin",
+    "supports": ">=4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/azstrait/thelounge-plugin-yomama.git"
+  },
+  "bugs": {
+    "url": "https://github.com/azstrait/thelounge-plugin-yomama/issues"
+  },
+  "homepage": "https://github.com/azstrait/thelounge-plugin-yomama#readme",
+  "keywords": [
+    "thelounge",
+    "thelounge-plugin",
+    "irc",
+    "plugin",
+    "jokes",
+    "yomama"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node -e \"console.log('No tests yet')\""
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  }
+}
