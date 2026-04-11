@@ -42,37 +42,41 @@ function printHelp(client, target) {
 const yomamaCommand = {
     input: async function (client, target, command, args) {
         try {
+            // Normalize first argument: lowercase + trim to handle trailing spaces
+            const firstArg = (args[0] || "").toLowerCase().trim();
+
             // No args or explicit help -> help message
-            if (args.length === 0 || String(args[0]).toLowerCase() === "help") {
+            if (args.length === 0 || firstArg === "" || firstArg === "help") {
                 printHelp(client, target);
                 return;
             }
 
-            const sub = String(args[0]).toLowerCase();
-
-            if (sub === "categories") {
+            if (firstArg === "categories") {
                 client.sendMessage(`Available categories: ${VALID_CATEGORIES.join(", ")}`, target.chan);
                 return;
             }
 
-            if (sub === "random") {
+            if (firstArg === "random") {
                 const joke = await getRandomJoke();
                 client.runAsUser(joke, target.chan.id);
                 return;
             }
 
-            // Category mode
-            if (args.length === 1 && VALID_CATEGORIES.includes(sub)) {
-                const joke = await getCategoryJoke(sub);
+            // Category mode (single, valid category)
+            if (args.length === 1 && VALID_CATEGORIES.includes(firstArg)) {
+                const joke = await getCategoryJoke(firstArg);
                 client.runAsUser(joke, target.chan.id);
                 return;
             }
 
-            // Unsupported argument
+            // Unsupported argument(s): suggest help/categories, then send a random joke as fallback
+            const shownArg = (args.join(" ") || "").trim();
             client.sendMessage(
-                `${red}Unsupported argument "${args.join(" ")}". Type /yomama help for usage.`,
+                `${red}Unsupported argument "${shownArg}". Try /yomama help or /yomama categories. Sending a random joke instead…`,
                 target.chan
             );
+            const fallback = await getRandomJoke();
+            client.runAsUser(fallback, target.chan.id);
         } catch (err) {
             const msg = err && err.message ? err.message : String(err);
             client.sendMessage(`${red}Error getting joke: ${msg}`, target.chan);
