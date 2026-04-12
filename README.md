@@ -7,6 +7,11 @@ A TheLounge plugin that accepts `/yomama` commands and sends random "Yo Mama" jo
 - `/yomama categories` → shows available categories
 - `/yomama random` → random joke (GET /api/random)
 - `/yomama <category>` → random joke from category (POST /api/random/{category})
+- Personalize jokes with a nick using `--<nick>`:
+  - `/yomama --<nick>` → random joke personalized
+  - `/yomama random --<nick>` → random joke personalized
+  - `/yomama <category> --<nick>` → category joke personalized
+- Invalid arguments: prints a hint to run `/yomama help` or `/yomama categories`, then sends a random joke (personalized if `--<nick>` is supplied)
 
 Valid categories: `fat`, `ugly`, `stupid`, `poor`, `old`, `skinny`, `hairy`, `short`, `nasty`, `bald`, `tall`.
 
