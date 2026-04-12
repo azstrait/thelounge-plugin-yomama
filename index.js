@@ -7,7 +7,7 @@ const VALID_CATEGORIES = [
     "fat", "ugly", "stupid", "poor", "old",
     "skinny", "hairy", "short", "nasty", "bald", "tall"
 ];
-const CONNECTOR_WORDS = new Set(["for", "as"]);
+const NICK_PREFIX = "--";
 const red = "04";
 
 const headers = { Accept: "application/json" };
@@ -42,8 +42,7 @@ function personalizeJoke(joke, nick) {
     if (!p) return joke;
 
     // Replace leading "Yo mama" or "Yo momma" (case-insensitive)
-    const replaced = joke.replace(/^\s*yo\s+(mama|momma)\b/i, `${p} $1`);
-    return replaced;
+    return joke.replace(/^\s*yo\s+(mama|momma)\b/i, `${p} $1`);
 }
 
 function printHelp(client, target) {
@@ -52,36 +51,41 @@ function printHelp(client, target) {
     client.sendMessage("/yomama categories - List available categories", target.chan);
     client.sendMessage("/yomama random - Get a random joke", target.chan);
     client.sendMessage("/yomama <category> - Get a random joke from a category", target.chan);
-    client.sendMessage("/yomama for <nick> - Random joke personalized with <nick>", target.chan);
-    client.sendMessage("/yomama random for <nick> - Random joke personalized with <nick>", target.chan);
-    client.sendMessage("/yomama <category> for <nick> - Category joke personalized with <nick>", target.chan);
+    client.sendMessage("/yomama --<nick> - Random joke personalized for <nick>", target.chan);
+    client.sendMessage("/yomama random --<nick> - Random joke personalized for <nick>", target.chan);
+    client.sendMessage("/yomama <category> --<nick> - Category joke personalized for <nick>", target.chan);
     client.sendMessage(`Available categories: ${VALID_CATEGORIES.join(", ")}`, target.chan);
+}
+
+function parseNickAndArgs(args) {
+    const cleanArgs = (args || []).map((a) => String(a || "").trim()).filter(Boolean);
+
+    let nick = null;
+    let nickIndex = -1;
+
+    for (let i = 0; i < cleanArgs.length; i++) {
+        const tok = cleanArgs[i];
+        if (tok.startsWith(NICK_PREFIX) && tok.length > NICK_PREFIX.length) {
+            nick = tok.slice(NICK_PREFIX.length).trim();
+            nickIndex = i;
+            break; // first --nick wins
+        }
+    }
+
+    const baseArgs = nickIndex >= 0
+        ? cleanArgs.filter((_, i) => i !== nickIndex)
+        : cleanArgs;
+
+    return { baseArgs, nick };
 }
 
 const yomamaCommand = {
     input: async function (client, target, command, args) {
         try {
-            // Normalize and trim args to handle trailing spaces
-            const cleanArgs = (args || []).map((a) => String(a || "").trim()).filter(Boolean);
-            const lowerArgs = cleanArgs.map((a) => a.toLowerCase());
-
-            // Split on "for" or "as" to capture optional nick without colliding with commands/categories
-            let nick = null;
-            let baseArgs = cleanArgs;
-
-            const connectorIndex = lowerArgs.findIndex((a) => CONNECTOR_WORDS.has(a));
-            if (connectorIndex !== -1) {
-                // Nick is the token immediately after connector
-                if (cleanArgs.length > connectorIndex + 1) {
-                    nick = cleanArgs[connectorIndex + 1].trim();
-                }
-                // Only parse the part before the connector
-                baseArgs = cleanArgs.slice(0, connectorIndex);
-            }
-
+            const { baseArgs, nick } = parseNickAndArgs(args);
             const firstArg = (baseArgs[0] || "").toLowerCase().trim();
 
-            // If user only provided a nick via connector, treat as random-for-nick (must come before help branch)
+            // If user only provided a --nick, treat as random-for-nick (must precede help)
             if (baseArgs.length === 0 && nick) {
                 const joke = await getRandomJoke();
                 const out = personalizeJoke(joke, nick);
@@ -116,7 +120,7 @@ const yomamaCommand = {
             }
 
             // Unsupported argument(s): suggest help/categories, then send a random joke as fallback (personalized if nick given)
-            const shownArg = (args.join(" ") || "").trim();
+            const shownArg = baseArgs.join(" ").trim();
             client.sendMessage(
                 `${red}Unsupported argument "${shownArg}". Try /yomama help or /yomama categories. Sending a random joke instead…`,
                 target.chan
