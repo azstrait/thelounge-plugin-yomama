@@ -47,13 +47,13 @@ function personalizeJoke(joke, nick) {
 
 function printHelp(client, target) {
     client.sendMessage("Yo Mama plugin usage:", target.chan);
-    client.sendMessage("/yomama help - Show this help", target.chan);
-    client.sendMessage("/yomama categories - List available categories", target.chan);
-    client.sendMessage("/yomama random - Get a random joke", target.chan);
-    client.sendMessage("/yomama <category> - Get a random joke from a category", target.chan);
-    client.sendMessage("/yomama --<nick> - Random joke personalized for <nick>", target.chan);
-    client.sendMessage("/yomama random --<nick> - Random joke personalized for <nick>", target.chan);
-    client.sendMessage("/yomama <category> --<nick> - Category joke personalized for <nick>", target.chan);
+    client.sendMessage("/yomama help → Show this help message", target.chan);
+    client.sendMessage("/yomama categories → List available categories", target.chan);
+    client.sendMessage("/yomama random → Get a random joke", target.chan);
+    client.sendMessage("/yomama <category> → Get a random joke from a category", target.chan);
+    client.sendMessage("/yomama --<nick> → Random joke personalized for <nick>", target.chan);
+    client.sendMessage("/yomama random --<nick> → Random joke personalized for <nick>", target.chan);
+    client.sendMessage("/yomama <category> --<nick> → Category joke personalized for <nick>", target.chan);
     client.sendMessage(`Available categories: ${VALID_CATEGORIES.join(", ")}`, target.chan);
 }
 
@@ -61,19 +61,32 @@ function parseNickAndArgs(args) {
     const cleanArgs = (args || []).map((a) => String(a || "").trim()).filter(Boolean);
 
     let nick = null;
-    let nickIndex = -1;
+    let removalIndexes = new Set();
 
     for (let i = 0; i < cleanArgs.length; i++) {
         const tok = cleanArgs[i];
+
+        // Case 1: --nick (single token)
         if (tok.startsWith(NICK_PREFIX) && tok.length > NICK_PREFIX.length) {
             nick = tok.slice(NICK_PREFIX.length).trim();
-            nickIndex = i;
-            break; // first --nick wins
+            removalIndexes.add(i);
+            break;
+        }
+
+        // Case 2: "--" followed by "nick" (two tokens)
+        if (tok === NICK_PREFIX && i + 1 < cleanArgs.length) {
+            const next = cleanArgs[i + 1].trim();
+            if (next) {
+                nick = next;
+                removalIndexes.add(i);
+                removalIndexes.add(i + 1);
+                break;
+            }
         }
     }
 
-    const baseArgs = nickIndex >= 0
-        ? cleanArgs.filter((_, i) => i !== nickIndex)
+    const baseArgs = removalIndexes.size
+        ? cleanArgs.filter((_, idx) => !removalIndexes.has(idx))
         : cleanArgs;
 
     return { baseArgs, nick };
@@ -119,15 +132,20 @@ const yomamaCommand = {
                 return;
             }
 
-            // Unsupported argument(s): suggest help/categories, then send a random joke as fallback (personalized if nick given)
+            // Unsupported arguments:
+            // - If no nick: just tip (no random fallback)
+            // - If nick present: tip + random personalized fallback
             const shownArg = baseArgs.join(" ").trim();
             client.sendMessage(
-                `${red}Unsupported argument "${shownArg}". Try /yomama help or /yomama categories. Sending a random joke instead…`,
+                `${red}Unsupported argument "${shownArg}". Try /yomama help or /yomama categories.`,
                 target.chan
             );
-            const fallback = await getRandomJoke();
-            const out = nick ? personalizeJoke(fallback, nick) : fallback;
-            client.runAsUser(out, target.chan.id);
+
+            if (nick) {
+                const fallback = await getRandomJoke();
+                const out = personalizeJoke(fallback, nick);
+                client.runAsUser(out, target.chan.id);
+            }
         } catch (err) {
             const msg = err && err.message ? err.message : String(err);
             client.sendMessage(`${red}Error getting joke: ${msg}`, target.chan);
