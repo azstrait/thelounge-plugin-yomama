@@ -136,10 +136,11 @@ const yomamaCommand = {
             // - If no nick: just tip (no random fallback)
             // - If nick present: tip + random personalized fallback
             const shownArg = baseArgs.join(" ").trim();
-            client.sendMessage(
-                `${red}Unsupported argument "${shownArg}". Try /yomama help or /yomama categories.`,
-                target.chan
-            );
+            let tip = `${red}Unsupported argument "${shownArg}". Try /yomama help or /yomama categories.`;
+            if (nick) {
+                tip += " Sending a random personalized joke instead…";
+            }
+            client.sendMessage(tip, target.chan);
 
             if (nick) {
                 const fallback = await getRandomJoke();
