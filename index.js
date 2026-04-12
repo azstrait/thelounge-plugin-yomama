@@ -75,14 +75,22 @@ const yomamaCommand = {
                 if (cleanArgs.length > connectorIndex + 1) {
                     nick = cleanArgs[connectorIndex + 1].trim();
                 }
-                // Ignore any extra tokens after the nick and only parse the part before the connector
+                // Only parse the part before the connector
                 baseArgs = cleanArgs.slice(0, connectorIndex);
             }
 
             const firstArg = (baseArgs[0] || "").toLowerCase().trim();
 
-            // No args or explicit help -> help message
-            if (baseArgs.length === 0 || firstArg === "" || firstArg === "help") {
+            // If user only provided a nick via connector, treat as random-for-nick (must come before help branch)
+            if (baseArgs.length === 0 && nick) {
+                const joke = await getRandomJoke();
+                const out = personalizeJoke(joke, nick);
+                client.runAsUser(out, target.chan.id);
+                return;
+            }
+
+            // Help
+            if (firstArg === "help" || baseArgs.length === 0) {
                 printHelp(client, target);
                 return;
             }
@@ -103,14 +111,6 @@ const yomamaCommand = {
             if (baseArgs.length === 1 && VALID_CATEGORIES.includes(firstArg)) {
                 const joke = await getCategoryJoke(firstArg);
                 const out = nick ? personalizeJoke(joke, nick) : joke;
-                client.runAsUser(out, target.chan.id);
-                return;
-            }
-
-            // If user only provided a nick via connector, treat as random-for-nick
-            if (baseArgs.length === 0 && nick) {
-                const joke = await getRandomJoke();
-                const out = personalizeJoke(joke, nick);
                 client.runAsUser(out, target.chan.id);
                 return;
             }
