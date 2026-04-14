@@ -6,7 +6,7 @@
   "license": "MIT",
   "author": "azstrait",
   "thelounge": {
-    "name": "yomama",
+    "name": "Yo Mama",
     "type": "plugin",
     "supports": ">=4.0.0"
   },
