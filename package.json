@@ -36,10 +36,11 @@
   ],
   "scripts": {
     "lint": "eslint .",
-    "test": "node -e \"console.log('No tests yet')\""
+    "test": "node --test"
   },
   "devDependencies": {
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "nock": "^13.5.6"
   },
   "dependencies": {
     "axios": "^1.7.0"

@@ -159,4 +159,6 @@ module.exports = {
     onServerStart: (api) => {
         api.Commands.add("yomama", yomamaCommand);
     },
+    // For tests
+    _command: yomamaCommand,
 };
